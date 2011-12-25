@@ -121,6 +121,11 @@ _model.delegate = (id)[NICellFactory class];
  * Implement this method to customize the cell's properties for display using the given object.
  */
 - (BOOL)shouldUpdateCellWithObject:(id)object;
+@optional
+/**
+ * Called by the UITableViewDelegate to determine the height for the row. 
+ */
++ (CGFloat)tableView:(UITableView *)tableView rowHeightForObject:(id<NICellObject>)object;
 @end
 
 /**

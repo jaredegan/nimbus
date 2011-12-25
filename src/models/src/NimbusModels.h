@@ -635,5 +635,6 @@ _model.delegate = (id)[NICellFactory class];
 #import "NITableViewModel.h"
 #import "NICellFactory.h"
 #import "NIFormCellCatalog.h"
+#import "NITableViewDelegate.h"
 
 /**@}*/
