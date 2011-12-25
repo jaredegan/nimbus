@@ -10,13 +10,30 @@
 
 @class NITableViewModel;
 
+/**
+ * The "NITableViewDelegateDelegate" will typically be a view controller that's
+ * interested in more control or messages.
+ * It is also a silly name.
+ */
+@protocol NITableViewDelegateDelegate <NSObject>
+
+@optional
+- (void)tableView:(UITableView *)tableView didSelectObject:(id)object
+      atIndexPath:(NSIndexPath *)indexPath;
+
+@end
+
 @interface NITableViewDelegate : NSObject <UITableViewDelegate> {
     NITableViewModel *_dataSource;
+    id<NITableViewDelegateDelegate> _delegate; 
 }
 
 @property (nonatomic, retain) NITableViewModel *dataSource;
 
-// Designated initializer.
+@property (nonatomic, assign) id<NITableViewDelegateDelegate> delegate;
+
 - (id)initWithDataSource:(NITableViewModel *)dataSource;
+- (id)initWithDataSource:(NITableViewModel *)dataSource
+                delegate:(id<NITableViewDelegateDelegate>)delegate;
 
 @end

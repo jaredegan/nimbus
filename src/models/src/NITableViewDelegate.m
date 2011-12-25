@@ -6,6 +6,7 @@
 //  Copyright 2011 ThickFuzz. All rights reserved.
 //
 
+#import "NimbusCore.h"
 #import "NITableViewDelegate.h"
 #import "NITableViewModel.h"
 #import "NICellFactory.h"
@@ -14,6 +15,7 @@
 @implementation NITableViewDelegate
 
 @synthesize dataSource = _dataSource;
+@synthesize delegate = _delegate;
 
 #pragma mark -
 #pragma mark Init & Factory
@@ -27,8 +29,20 @@
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
+- (id)initWithDataSource:(NITableViewModel *)dataSource
+                delegate:(id<NITableViewDelegateDelegate>)delegate {
+	if ((self = [super init])) {
+        self.dataSource = dataSource;
+        self.delegate = delegate;
+	}
+	
+	return self;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
 - (void)dealloc {
 	self.dataSource = nil;
+    self.delegate = nil;
 	[super dealloc];
 }
 
@@ -36,6 +50,17 @@
 #pragma mark UITableViewDelegate
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
+    NIDINFO(@"_delegate: %@", _delegate);
+
+    if ([_delegate conformsToProtocol:@protocol(NITableViewDelegateDelegate)] &&
+        [_delegate respondsToSelector:@selector(tableView:didSelectObject:atIndexPath:)]) {
+        id object = [self.dataSource objectAtIndexPath:indexPath];
+
+        if (object != nil) {
+            [_delegate tableView:tableView didSelectObject:object atIndexPath:indexPath];
+        }
+    }
+    
     [tableView deselectRowAtIndexPath:indexPath animated:YES];
 }
 
