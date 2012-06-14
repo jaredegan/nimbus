@@ -82,4 +82,18 @@
     return tableView.rowHeight;
 }
 
+#pragma mark - UIScrollViewDelegate
+/**
+ * Since this class frequently takes away the oppotunity of view controllers to be table view
+ * delegates, it can forward the messages to the NITableViewDelegateDelegate.
+ */
+///////////////////////////////////////////////////////////////////////////////////////////////////
+- (void)scrollViewDidScroll:(UIScrollView *)scrollView {
+    if ([self.delegate conformsToProtocol:@protocol(UIScrollViewDelegate)] &&
+        [self.delegate respondsToSelector:@selector(scrollViewDidScroll:)]) {
+        [(id<UIScrollViewDelegate>)self.delegate scrollViewDidScroll:scrollView];
+    }
+        
+}
+
 @end
