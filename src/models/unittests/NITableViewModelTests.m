@@ -35,30 +35,56 @@
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 - (void)testEmptyTableViewModel {
-  NITableViewModel* model = [[[NITableViewModel alloc] init] autorelease];
+  NITableViewModel* model = [[NITableViewModel alloc] init];
 
   STAssertEquals([model tableView:nil numberOfRowsInSection:0], 0, @"The model should be empty.");
   STAssertEquals([model numberOfSectionsInTableView:nil], 1, @"There should always be at least 1 section.");
   
-  model = [[[NITableViewModel alloc] initWithListArray:nil delegate:nil] autorelease];
+  model = [[NITableViewModel alloc] initWithListArray:nil delegate:nil];
   
   STAssertEquals([model tableView:nil numberOfRowsInSection:0], 0, @"The model should be empty.");
   STAssertEquals([model numberOfSectionsInTableView:nil], 1, @"There should always be at least 1 section.");
   
-  model = [[[NITableViewModel alloc] initWithSectionedArray:nil delegate:nil] autorelease];
+  model = [[NITableViewModel alloc] initWithSectionedArray:nil delegate:nil];
   
   STAssertEquals([model tableView:nil numberOfRowsInSection:0], 0, @"The model should be empty.");
   STAssertEquals([model numberOfSectionsInTableView:nil], 1, @"There should always be at least 1 section.");
   
-  model = [[[NITableViewModel alloc] initWithListArray:[NSArray array] delegate:nil] autorelease];
+  model = [[NITableViewModel alloc] initWithListArray:[NSArray array] delegate:nil];
   
   STAssertEquals([model tableView:nil numberOfRowsInSection:0], 0, @"The model should be empty.");
   STAssertEquals([model numberOfSectionsInTableView:nil], 1, @"There should always be at least 1 section.");
   
-  model = [[[NITableViewModel alloc] initWithSectionedArray:[NSArray array] delegate:nil] autorelease];
+  model = [[NITableViewModel alloc] initWithSectionedArray:[NSArray array] delegate:nil];
   
   STAssertEquals([model tableView:nil numberOfRowsInSection:0], 0, @"The model should be empty.");
   STAssertEquals([model numberOfSectionsInTableView:nil], 1, @"There should always be at least 1 section.");
+}
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+- (void)testInvalidAccess {
+  NITableViewModel* model = [[NITableViewModel alloc] init];
+
+  STAssertNil([model tableView:nil titleForHeaderInSection:0], @"There should not be a header title.");
+  STAssertNil([model tableView:nil titleForFooterInSection:0], @"There should not be a footer title.");
+
+  STAssertNil([model tableView:nil titleForHeaderInSection:1], @"There should not be a header title.");
+  STAssertNil([model tableView:nil titleForFooterInSection:1], @"There should not be a footer title.");
+  
+  STAssertNil([model tableView:nil titleForHeaderInSection:-1], @"There should not be a header title.");
+  STAssertNil([model tableView:nil titleForFooterInSection:-1], @"There should not be a footer title.");
+}
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+- (void)testEditing {
+  NITableViewModel* model = [[NITableViewModel alloc] init];
+
+  STAssertFalse([model tableView:nil canEditRowAtIndexPath:[NSIndexPath indexPathForRow:0 inSection:0]],
+                @"Should not be able to edit anything.");
+  STAssertFalse([model tableView:nil canEditRowAtIndexPath:[NSIndexPath indexPathForRow:1 inSection:1]],
+                @"Should not be able to edit anything.");
 }
 
 
@@ -70,7 +96,7 @@
                        [NSDictionary dictionaryWithObject:@"Row 2" forKey:@"title"],
                        [NSDictionary dictionaryWithObject:@"Row 3" forKey:@"title"],
                        nil];
-  NITableViewModel* model = [[[NITableViewModel alloc] initWithListArray:contents delegate:nil] autorelease];
+  NITableViewModel* model = [[NITableViewModel alloc] initWithListArray:contents delegate:nil];
 
   STAssertEquals([model tableView:nil numberOfRowsInSection:0], 4, @"The model should have 4 rows.");
   STAssertEquals([model numberOfSectionsInTableView:nil], 1, @"There should be 1 section.");
@@ -89,7 +115,7 @@
                        object2,
                        object3,
                        nil];
-  NITableViewModel* model = [[[NITableViewModel alloc] initWithListArray:contents delegate:nil] autorelease];
+  NITableViewModel* model = [[NITableViewModel alloc] initWithListArray:contents delegate:nil];
   
   STAssertEquals([model objectAtIndexPath:[NSIndexPath indexPathForRow:0 inSection:0]], @"This is a string", @"The first object should be the string.");
   STAssertEquals([model objectAtIndexPath:[NSIndexPath indexPathForRow:1 inSection:0]], object1, @"Object mismatch.");
@@ -119,7 +145,7 @@
                        @"Section 4",
                        @"Section 5",
                        nil];
-  NITableViewModel* model = [[[NITableViewModel alloc] initWithSectionedArray:contents delegate:nil] autorelease];
+  NITableViewModel* model = [[NITableViewModel alloc] initWithSectionedArray:contents delegate:nil];
   
   STAssertEquals([model tableView:nil numberOfRowsInSection:0], 3, @"The first section should have 3 rows.");
   STAssertEquals([model tableView:nil numberOfRowsInSection:1], 2, @"The second section should have 2 rows.");
@@ -149,7 +175,7 @@
                        @"Section 6",
                        @"Section 7",
                        nil];
-  NITableViewModel* model = [[[NITableViewModel alloc] initWithSectionedArray:contents delegate:nil] autorelease];
+  NITableViewModel* model = [[NITableViewModel alloc] initWithSectionedArray:contents delegate:nil];
   
   STAssertEquals([model tableView:nil numberOfRowsInSection:0], 3, @"The first section should have 3 rows.");
   STAssertEquals([model tableView:nil numberOfRowsInSection:1], 2, @"The second section should have 2 rows.");
@@ -163,5 +189,66 @@
   STAssertNil([model tableView:nil titleForFooterInSection:6], @"There should not be a title.");
 }
 
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+- (void)testDynamicSectionedIndex {
+  NSArray* contents = [NSArray arrayWithObjects:
+                       @"A",
+                       [NSDictionary dictionaryWithObject:@"Row 1" forKey:@"title"],
+                       [NSDictionary dictionaryWithObject:@"Row 2" forKey:@"title"],
+                       [NSDictionary dictionaryWithObject:@"Row 3" forKey:@"title"],
+                       [NITableViewModelFooter footerWithTitle:@"Footer 1"],
+                       @"C",
+                       [NSDictionary dictionaryWithObject:@"Row 1" forKey:@"title"],
+                       [NSDictionary dictionaryWithObject:@"Row 3" forKey:@"title"],
+                       [NITableViewModelFooter footerWithTitle:@"Footer 2"],
+                       @"D",
+                       [NITableViewModelFooter footerWithTitle:@"Footer 3"],
+                       [NITableViewModelFooter footerWithTitle:@"Footer 4"],
+                       [NSDictionary dictionaryWithObject:@"Row 1" forKey:@"title"],
+                       [NSDictionary dictionaryWithObject:@"Row 3" forKey:@"title"],
+                       [NITableViewModelFooter footerWithTitle:@"Footer 5"],
+                       nil];
+  NITableViewModel* model = [[NITableViewModel alloc] initWithSectionedArray:contents delegate:nil];
+  [model setSectionIndexType:NITableViewModelSectionIndexDynamic showsSearch:YES showsSummary:YES];
+
+  STAssertEquals(model.sectionIndexType, NITableViewModelSectionIndexDynamic, @"Section index type should have been set.");
+  NSArray* sectionIndexTitles = [model sectionIndexTitlesForTableView:nil];
+  NSArray* expectedTitle = [NSArray arrayWithObjects:UITableViewIndexSearch, @"A", @"C", @"D", @"#", nil];
+  STAssertEquals(sectionIndexTitles.count, expectedTitle.count, @"Arrays should be the same size.");
+  for (NSInteger ix = 0; ix < sectionIndexTitles.count; ++ix) {
+    STAssertEquals([sectionIndexTitles objectAtIndex:ix], [expectedTitle objectAtIndex:ix], @"Objects should match.");
+  }
+
+  [model setSectionIndexType:NITableViewModelSectionIndexDynamic showsSearch:NO showsSummary:YES];
+
+  STAssertEquals(model.sectionIndexType, NITableViewModelSectionIndexDynamic, @"Section index type should have been set.");
+  sectionIndexTitles = [model sectionIndexTitlesForTableView:nil];
+  expectedTitle = [NSArray arrayWithObjects:@"A", @"C", @"D", @"#", nil];
+  STAssertEquals(sectionIndexTitles.count, expectedTitle.count, @"Arrays should be the same size.");
+  for (NSInteger ix = 0; ix < sectionIndexTitles.count; ++ix) {
+    STAssertEquals([sectionIndexTitles objectAtIndex:ix], [expectedTitle objectAtIndex:ix], @"Objects should match.");
+  }
+
+  [model setSectionIndexType:NITableViewModelSectionIndexDynamic showsSearch:YES showsSummary:NO];
+
+  STAssertEquals(model.sectionIndexType, NITableViewModelSectionIndexDynamic, @"Section index type should have been set.");
+  sectionIndexTitles = [model sectionIndexTitlesForTableView:nil];
+  expectedTitle = [NSArray arrayWithObjects:UITableViewIndexSearch, @"A", @"C", @"D", nil];
+  STAssertEquals(sectionIndexTitles.count, expectedTitle.count, @"Arrays should be the same size.");
+  for (NSInteger ix = 0; ix < sectionIndexTitles.count; ++ix) {
+    STAssertEquals([sectionIndexTitles objectAtIndex:ix], [expectedTitle objectAtIndex:ix], @"Objects should match.");
+  }
+
+  [model setSectionIndexType:NITableViewModelSectionIndexDynamic showsSearch:NO showsSummary:NO];
+
+  STAssertEquals(model.sectionIndexType, NITableViewModelSectionIndexDynamic, @"Section index type should have been set.");
+  sectionIndexTitles = [model sectionIndexTitlesForTableView:nil];
+  expectedTitle = [NSArray arrayWithObjects:@"A", @"C", @"D", nil];
+  STAssertEquals(sectionIndexTitles.count, expectedTitle.count, @"Arrays should be the same size.");
+  for (NSInteger ix = 0; ix < sectionIndexTitles.count; ++ix) {
+    STAssertEquals([sectionIndexTitles objectAtIndex:ix], [expectedTitle objectAtIndex:ix], @"Objects should match.");
+  }
+}
 
 @end

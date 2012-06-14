@@ -27,30 +27,29 @@
 /**
  * A UILabel that utilizes NSAttributedString to format its text.
  *
+ * A note on using lineBreakMode with NIAttributedLabel:
+ * CoreText's line break mode functionality does not work the same way as UILabel.
+ *
+ * UILabel: when you use truncation modes with multiline labels, the text will be treated as
+ * one continuous string. The documentation for each UILineBreakMode value applies correctly to
+ * UILabels.
+ *
+ * NIAttributedLabel: when you use truncation modes with multiline labels, the modes behave
+ * differently:
+ *
+ * - UILineBreakModeWordWrap, UILineBreakModeCharacterWrap: wraps the text over multiple lines with
+ *   no truncation.
+ * - UILineBreakModeHeadTruncation, UILineBreakModeTailTruncation, UILineBreakModeMiddleTruncation:
+ *   will only break the text onto a new line when a \n character is encountered. Each line is
+ *   truncated with the line break mode.
+ *
+ * In short: if you want to use truncation with a multiline attributed label then you need to
+ * manually wrap the lines by using \n characters. If you don't need truncation then you can use
+ * the word wrap and character wrap modes to have the text automatically wrap.
+ *
  *      @ingroup NimbusAttributedLabel
  */
-
-@interface NIAttributedLabel : UILabel {
-  NSMutableAttributedString* _attributedString;
-  
-  CTFrameRef _textFrame;
-
-  BOOL _linksHaveBeenDetected;
-  NSArray* _detectedlinkLocations;
-  NSMutableArray* _explicitLinkLocations;
-  NSTextCheckingResult* _touchedLink;
-
-  BOOL _autoDetectLinks;
-  UIColor* _linkColor;
-  UIColor* _linkHighlightColor;
-  CGFloat _strokeWidth;
-  UIColor* _strokeColor;
-  CGFloat _textKern;
-  CTUnderlineStyle _underlineStyle;
-  CTUnderlineStyleModifiers _underlineStyleModifier;
-
-  id<NIAttributedLabelDelegate> _delegate;
-}
+@interface NIAttributedLabel : UILabel
 
 /**
  * The attributed string that will be displayed.
@@ -103,6 +102,15 @@
  * better).
  */
 @property (nonatomic, retain) UIColor* linkHighlightColor;
+
+/**
+ * Whether or not links should have underlines.
+ *
+ * By default this is NO.
+ *
+ * This affects all links in the label.
+ */
+@property (nonatomic, assign) BOOL linksHaveUnderlines;
 
 /**
  * The underline style for the whole text.

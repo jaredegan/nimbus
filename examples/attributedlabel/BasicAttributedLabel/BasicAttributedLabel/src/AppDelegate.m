@@ -26,15 +26,6 @@
 
 @synthesize window = _window;
 
-
-///////////////////////////////////////////////////////////////////////////////////////////////////
-- (void)dealloc {
-  NI_RELEASE_SAFELY(_window);
-  NI_RELEASE_SAFELY(_rootController);
-  [super dealloc];
-}
-
-
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 #pragma mark -
@@ -44,15 +35,12 @@
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 - (BOOL)              application:(UIApplication *)application
     didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
-  self.window = [[[UIWindow alloc] initWithFrame:[UIScreen mainScreen].bounds] autorelease];
-  
-  RootViewController* mainController =
-  [[[RootViewController alloc] initWithStyle:UITableViewStyleGrouped] autorelease];
-  
-  _rootController = [[UINavigationController alloc] initWithRootViewController:mainController];
-  
-  [self.window addSubview:_rootController.view];
-  
+  self.window = [[UIWindow alloc] initWithFrame:[UIScreen mainScreen].bounds];
+
+  RootViewController* mainController = [[RootViewController alloc] init];
+  UINavigationController* nc = [[UINavigationController alloc] initWithRootViewController:mainController];
+  self.window.rootViewController = nc;
+  [self.window addSubview:nc.view];
   [self.window makeKeyAndVisible];
 
   return YES;

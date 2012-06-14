@@ -18,8 +18,19 @@
 
 #import "NimbusCore.h"
 #import "NSAttributedString+NimbusAttributedLabel.h"
+#import <QuartzCore/QuartzCore.h>
 
-@interface NIAttributedLabel (ConversionUtilities)
+@interface NIAttributedLabel()
+@property (nonatomic, readwrite, retain) NSMutableAttributedString* mutableAttributedString;
+@property (nonatomic, readwrite, assign) CTFrameRef textFrame;
+@property (nonatomic, readwrite, assign) BOOL linksHaveBeenDetected;
+@property (nonatomic, readwrite, copy) NSArray* detectedlinkLocations;
+@property (nonatomic, readwrite, retain) NSMutableArray* explicitLinkLocations;
+@property (nonatomic, readwrite, retain) NSTextCheckingResult* touchedLink;
+@end
+
+
+@interface NIAttributedLabel(ConversionUtilities)
 + (CTTextAlignment)alignmentFromUITextAlignment:(UITextAlignment)alignment;
 + (CTLineBreakMode)lineBreakModeFromUILineBreakMode:(UILineBreakMode)lineBreakMode;
 + (NSMutableAttributedString *)mutableAttributedStringFromLabel:(UILabel *)label;
@@ -31,6 +42,12 @@
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 @implementation NIAttributedLabel
 
+@synthesize mutableAttributedString = _mutableAttributedString;
+@synthesize textFrame = _textFrame;
+@synthesize linksHaveBeenDetected = _linksHaveBeenDetected;
+@synthesize detectedlinkLocations = _detectedlinkLocations;
+@synthesize explicitLinkLocations = _explicitLinkLocations;
+@synthesize touchedLink = _touchedLink;
 @synthesize autoDetectLinks = _autoDetectLinks;
 @synthesize underlineStyle = _underlineStyle;
 @synthesize underlineStyleModifier = _underlineStyleModifier;
@@ -39,27 +56,16 @@
 @synthesize textKern = _textKern;
 @synthesize linkColor = _linkColor;
 @synthesize linkHighlightColor = _linkHighlightColor;
+@synthesize linksHaveUnderlines = _linksHaveUnderlines;
 @synthesize delegate = _delegate;
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 - (void)dealloc {
-  NI_RELEASE_SAFELY(_attributedString);
-
   if (nil != _textFrame) {
-		CFRelease(_textFrame);
-		_textFrame = nil;
-	}
-
-  NI_RELEASE_SAFELY(_detectedlinkLocations);
-  NI_RELEASE_SAFELY(_explicitLinkLocations);
-  NI_RELEASE_SAFELY(_touchedLink);
-
-  NI_RELEASE_SAFELY(_linkColor);
-  NI_RELEASE_SAFELY(_linkHighlightColor);
-  NI_RELEASE_SAFELY(_strokeColor);
-
-  [super dealloc];
+    CFRelease(_textFrame);
+    _textFrame = nil;
+  }
 }
 
 
@@ -88,12 +94,36 @@
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
+- (void)setFrame:(CGRect)frame {
+  BOOL frameDidChange = !CGRectEqualToRect(self.frame, frame);
+
+  [super setFrame:frame];
+
+  if (frameDidChange) {
+    [self attributedTextDidChange];
+  }
+}
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+- (void)setBounds:(CGRect)bounds {
+  BOOL boundsDidChange = !CGRectEqualToRect(self.bounds, bounds);
+
+  [super setBounds:bounds];
+
+  if (boundsDidChange) {
+    [self attributedTextDidChange];
+  }
+}
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
 - (CGSize)sizeThatFits:(CGSize)size {
-	if (nil == _attributedString) {
+	if (nil == _mutableAttributedString) {
     return CGSizeZero;
   }
 
-  CFAttributedStringRef attributedStringRef = (CFAttributedStringRef)_attributedString;
+  CFAttributedStringRef attributedStringRef = (__bridge CFAttributedStringRef)_mutableAttributedString;
   CTFramesetterRef framesetter = CTFramesetterCreateWithAttributedString(attributedStringRef);
 	CFRange fitCFRange = CFRangeMake(0,0);
 	CGSize newSize = CTFramesetterSuggestFrameSizeWithConstraints(framesetter, CFRangeMake(0, 0),
@@ -123,21 +153,20 @@
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 - (NSAttributedString *)attributedString {
-  if (nil == _attributedString) {
+  if (nil == _mutableAttributedString) {
     self.attributedString = [[self class] mutableAttributedStringFromLabel:self];
   }
-  return [[_attributedString copy] autorelease];
+  return [_mutableAttributedString copy];
 }
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 - (void)setAttributedString:(NSAttributedString *)attributedText {
-  if (_attributedString != attributedText) {
-    [_attributedString release];
-    _attributedString = [attributedText mutableCopy];
+  if (_mutableAttributedString != attributedText) {
+    _mutableAttributedString = [attributedText mutableCopy];
 
     // Clear the link caches.
-    NI_RELEASE_SAFELY(_detectedlinkLocations);
+    _detectedlinkLocations = nil;
     _linksHaveBeenDetected = NO;
     [self removeAllExplicitLinks];
 
@@ -170,7 +199,7 @@
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 - (void)removeAllExplicitLinks {
-  NI_RELEASE_SAFELY(_explicitLinkLocations);
+  _explicitLinkLocations = nil;
 
   [self attributedTextDidChange];
 }
@@ -182,10 +211,10 @@
   // we call setNeedsDisplay ourselves.
   [super setTextAlignment:textAlignment];
 
-  if (nil != _attributedString) {
+  if (nil != _mutableAttributedString) {
     CTTextAlignment alignment = [[self class] alignmentFromUITextAlignment:textAlignment];
     CTLineBreakMode lineBreak = [[self class] lineBreakModeFromUILineBreakMode:self.lineBreakMode];
-    [_attributedString setTextAlignment:alignment lineBreakMode:lineBreak];
+    [_mutableAttributedString setTextAlignment:alignment lineBreakMode:lineBreak];
   }
 }
 
@@ -194,10 +223,10 @@
 - (void)setLineBreakMode:(UILineBreakMode)lineBreakMode {
   [super setLineBreakMode:lineBreakMode];
 
-  if (nil != _attributedString) {
+  if (nil != _mutableAttributedString) {
     CTTextAlignment alignment = [[self class] alignmentFromUITextAlignment:self.textAlignment];
     CTLineBreakMode lineBreak = [[self class] lineBreakModeFromUILineBreakMode:lineBreakMode];
-    [_attributedString setTextAlignment:alignment lineBreakMode:lineBreak];
+    [_mutableAttributedString setTextAlignment:alignment lineBreakMode:lineBreak];
   }
 }
 
@@ -206,13 +235,13 @@
 - (void)setTextColor:(UIColor *)textColor {
   [super setTextColor:textColor];
 
-  [_attributedString setTextColor:textColor];
+  [_mutableAttributedString setTextColor:textColor];
 }
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 - (void)setTextColor:(UIColor *)textColor range:(NSRange)range {
-  [_attributedString setTextColor:textColor range:range];
+  [_mutableAttributedString setTextColor:textColor range:range];
 
   [self attributedTextDidChange];
 }
@@ -222,13 +251,13 @@
 - (void)setFont:(UIFont *)font {
 	[super setFont:font];
 
-  [_attributedString setFont:font];
+  [_mutableAttributedString setFont:font];
 }
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 - (void)setFont:(UIFont *)font range:(NSRange)range {
-  [_attributedString setFont:font range:range];
+  [_mutableAttributedString setFont:font range:range];
 
   [self attributedTextDidChange];
 }
@@ -237,7 +266,7 @@
 - (void)setUnderlineStyle:(CTUnderlineStyle)style {
   if (style != _underlineStyle) {
     _underlineStyle = style;
-    [_attributedString setUnderlineStyle:style modifier:self.underlineStyleModifier];
+    [_mutableAttributedString setUnderlineStyle:style modifier:self.underlineStyleModifier];
 
     [self attributedTextDidChange];
   }
@@ -247,7 +276,7 @@
 - (void)setUnderlineStyleModifier:(CTUnderlineStyleModifiers)modifier {
   if (modifier != _underlineStyleModifier) {
     _underlineStyleModifier = modifier;
-    [_attributedString setUnderlineStyle:self.underlineStyle  modifier:modifier];
+    [_mutableAttributedString setUnderlineStyle:self.underlineStyle  modifier:modifier];
 
     [self attributedTextDidChange];
   }
@@ -255,7 +284,7 @@
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 - (void)setUnderlineStyle:(CTUnderlineStyle)style modifier:(CTUnderlineStyleModifiers)modifier range:(NSRange)range {
-  [_attributedString setUnderlineStyle:style modifier:modifier range:range];
+  [_mutableAttributedString setUnderlineStyle:style modifier:modifier range:range];
 
   [self attributedTextDidChange];
 }
@@ -265,7 +294,7 @@
 - (void)setStrokeWidth:(CGFloat)strokeWidth {
   if (_strokeWidth != strokeWidth) {
     _strokeWidth = strokeWidth;
-    [_attributedString setStrokeWidth:strokeWidth];
+    [_mutableAttributedString setStrokeWidth:strokeWidth];
 
     [self attributedTextDidChange];
   }
@@ -274,7 +303,7 @@
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 - (void)setStrokeWidth:(CGFloat)width range:(NSRange)range {
-  [_attributedString setStrokeWidth:width range:range];
+  [_mutableAttributedString setStrokeWidth:width range:range];
 
   [self attributedTextDidChange];
 }
@@ -283,9 +312,8 @@
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 - (void)setStrokeColor:(UIColor *)strokeColor {
   if (_strokeColor != strokeColor) {
-    [_strokeColor release];
-    _strokeColor = [strokeColor retain];
-    [_attributedString setStrokeColor:_strokeColor];
+    _strokeColor = strokeColor;
+    [_mutableAttributedString setStrokeColor:_strokeColor];
 
     [self attributedTextDidChange];
   }
@@ -294,7 +322,7 @@
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 - (void)setStrokeColor:(UIColor*)color range:(NSRange)range {
-  [_attributedString setStrokeColor:_strokeColor range:range];
+  [_mutableAttributedString setStrokeColor:color range:range];
 
   [self attributedTextDidChange];
 }
@@ -304,7 +332,7 @@
 - (void)setTextKern:(CGFloat)textKern {
   if (_textKern != textKern) {
     _textKern = textKern;
-    [_attributedString setKern:_textKern];
+    [_mutableAttributedString setKern:_textKern];
 
     [self attributedTextDidChange];
   }
@@ -313,7 +341,7 @@
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 - (void)setTextKern:(CGFloat)kern range:(NSRange)range {
-  [_attributedString setKern:kern range:range];
+  [_mutableAttributedString setKern:kern range:range];
 
   [self attributedTextDidChange];
 }
@@ -322,7 +350,7 @@
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 - (UIColor *)linkColor {
   if (nil == _linkColor) {
-    _linkColor = [[UIColor blueColor] retain];
+    _linkColor = [UIColor blueColor];
   }
   return _linkColor;
 }
@@ -331,8 +359,7 @@
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 - (void)setLinkColor:(UIColor *)linkColor {
   if (_linkColor != linkColor) {
-    [_linkColor release];
-    _linkColor = [linkColor retain];
+    _linkColor = linkColor;
 
     [self attributedTextDidChange];
   }
@@ -342,7 +369,7 @@
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 - (UIColor *)linkHighlightColor {
   if (!_linkHighlightColor) {
-    _linkHighlightColor = [[UIColor colorWithWhite:0.5f alpha:0.5f] retain];
+    _linkHighlightColor = [UIColor colorWithWhite:0.5f alpha:0.5f];
   }
   return _linkHighlightColor;
 }
@@ -351,8 +378,17 @@
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 - (void)setLinkHighlightColor:(UIColor *)linkHighlightColor {
   if (_linkHighlightColor != linkHighlightColor) {
-    [_linkHighlightColor release];
-    _linkHighlightColor = [linkHighlightColor retain];
+    _linkHighlightColor = linkHighlightColor;
+
+    [self attributedTextDidChange];
+  }
+}
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+- (void)setLinksHaveUnderlines:(BOOL)linksHaveUnderlines {
+  if (_linksHaveUnderlines != linksHaveUnderlines) {
+    _linksHaveUnderlines = linksHaveUnderlines;
 
     [self attributedTextDidChange];
   }
@@ -367,11 +403,10 @@
     NSError* error = nil;
     NSDataDetector* linkDetector = [NSDataDetector dataDetectorWithTypes:NSTextCheckingTypeLink
                                                                    error:&error];
-    NSString* string = _attributedString.string;
+    NSString* string = _mutableAttributedString.string;
     NSRange range = NSMakeRange(0, string.length);
 
-    [_detectedlinkLocations release];
-    _detectedlinkLocations = [[linkDetector matchesInString:string options:0 range:range] retain];
+    _detectedlinkLocations = [linkDetector matchesInString:string options:0 range:range];
 
     _linksHaveBeenDetected = YES;
   }
@@ -399,7 +434,7 @@
 
     for (NSTextCheckingResult* result in _detectedlinkLocations) {
       if (NSLocationInRange(i, result.range)) {
-        foundResult = [[result retain] autorelease];
+        foundResult = result;
         break;
       }
     }
@@ -408,7 +443,7 @@
   if (nil == foundResult) {
     for (NSTextCheckingResult* result in _explicitLinkLocations) {
       if (NSLocationInRange(i, result.range)) {
-        foundResult = [[result retain] autorelease];
+        foundResult = result;
         break;
       }
     }
@@ -478,10 +513,9 @@
 - (void)touchesBegan:(NSSet *)touches withEvent:(UIEvent *)event {
   UITouch* touch = [touches anyObject];
 	CGPoint point = [touch locationInView:self];
-
-  [_touchedLink release];
-  _touchedLink = [[self linkAtPoint:point] retain];
-
+  
+  _touchedLink = [self linkAtPoint:point];
+  
   [self setNeedsDisplay];
 }
 
@@ -499,7 +533,7 @@
     }
   }
 
-  NI_RELEASE_SAFELY(_touchedLink);
+  _touchedLink = nil;
 
   [self setNeedsDisplay];
 }
@@ -507,7 +541,7 @@
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 - (void)touchesCancelled:(NSSet *)touches withEvent:(UIEvent *)event {
-  NI_RELEASE_SAFELY(_touchedLink);
+  _touchedLink = nil;
 
   [self setNeedsDisplay];
 }
@@ -519,17 +553,27 @@
 // makes it possible to turn off links or remove them altogether without losing the existing
 // style information.
 - (NSMutableAttributedString *)mutableAttributedStringWithLinkStylesApplied {
-  NSMutableAttributedString* attributedString = [[self.attributedString mutableCopy] autorelease];
+  NSMutableAttributedString* attributedString = [self.attributedString mutableCopy];
   if (self.autoDetectLinks) {
     for (NSTextCheckingResult* result in _detectedlinkLocations) {
       [attributedString setTextColor:self.linkColor
                                range:result.range];
+      if (self.linksHaveUnderlines) {
+        [attributedString setUnderlineStyle:kCTUnderlineStyleSingle
+                                   modifier:kCTUnderlinePatternSolid
+                                      range:result.range];
+      }
     }
   }
 
   for (NSTextCheckingResult* result in _explicitLinkLocations) {
     [attributedString setTextColor:self.linkColor
                              range:result.range];
+    if (self.linksHaveUnderlines) {
+      [attributedString setUnderlineStyle:kCTUnderlineStyleSingle
+                                 modifier:kCTUnderlinePatternSolid
+                                    range:result.range];
+    }
   }
 
   return attributedString;
@@ -544,8 +588,9 @@
 
   NSMutableAttributedString* attributedStringWithLinks =
     [self mutableAttributedStringWithLinkStylesApplied];
-  self.userInteractionEnabled = (_detectedlinkLocations.count > 0
-                                 || _explicitLinkLocations.count > 0);
+  if (_detectedlinkLocations.count > 0 || _explicitLinkLocations.count > 0) {
+    self.userInteractionEnabled = YES;
+  }
 
   if (nil != attributedStringWithLinks) {
     CGContextRef ctx = UIGraphicsGetCurrentContext();
@@ -556,11 +601,14 @@
                                                    1.f, -1.f));
 
     if (nil == _textFrame) {
-      CFAttributedStringRef attributedString = (CFAttributedStringRef)attributedStringWithLinks;
+      CFAttributedStringRef attributedString = (__bridge CFAttributedStringRef)attributedStringWithLinks;
       CTFramesetterRef framesetter = CTFramesetterCreateWithAttributedString(attributedString);
 
       CGMutablePathRef path = CGPathCreateMutable();
 			CGPathAddRect(path, NULL, self.bounds);
+      if (nil != self.shadowColor) {
+        CGContextSetShadowWithColor(ctx, self.shadowOffset, 0, self.shadowColor.CGColor);
+      }
       _textFrame = CTFramesetterCreateFrame(framesetter, CFRangeMake(0, 0), path, NULL);
 			CGPathRelease(path);
 			CFRelease(framesetter);
@@ -706,7 +754,7 @@
   NSMutableAttributedString* attributedString = nil;
   
   if (NIIsStringWithAnyText(label.text)) {
-    attributedString = [[[NSMutableAttributedString alloc] initWithString:label.text] autorelease];
+    attributedString = [[NSMutableAttributedString alloc] initWithString:label.text];
     
     [attributedString setFont:label.font];
     [attributedString setTextColor:label.textColor];

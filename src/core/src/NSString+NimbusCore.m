@@ -56,13 +56,15 @@ NI_FIX_CATEGORY_BUG(NSStringNimbusCore)
  *
  * A convenience wrapper for sizeWithFont:constrainedToSize:lineBreakMode:
  */
-- (CGFloat)heightWithFont: (UIFont*)font
-       constrainedToWidth: (CGFloat)width
-            lineBreakMode: (UILineBreakMode)lineBreakMode {
-  return [self sizeWithFont: font
-          constrainedToSize: CGSizeMake(width, CGFLOAT_MAX)
-              lineBreakMode: lineBreakMode].height;
+// COV_NF_START
+- (CGFloat)heightWithFont:(UIFont*)font
+       constrainedToWidth:(CGFloat)width
+            lineBreakMode:(UILineBreakMode)lineBreakMode {
+  return [self sizeWithFont:font
+          constrainedToSize:CGSizeMake(width, CGFLOAT_MAX)
+              lineBreakMode:lineBreakMode].height;
 }
+// COV_NF_END
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -79,7 +81,7 @@ NI_FIX_CATEGORY_BUG(NSStringNimbusCore)
 - (NSDictionary*)queryContentsUsingEncoding:(NSStringEncoding)encoding {
   NSCharacterSet* delimiterSet = [NSCharacterSet characterSetWithCharactersInString:@"&;"];
   NSMutableDictionary* pairs = [NSMutableDictionary dictionary];
-  NSScanner* scanner = [[[NSScanner alloc] initWithString:self] autorelease];
+  NSScanner* scanner = [[NSScanner alloc] initWithString:self];
   while (![scanner isAtEnd]) {
     NSString* pairString = nil;
     [scanner scanUpToCharactersFromSet:delimiterSet intoString:&pairString];
@@ -112,12 +114,19 @@ NI_FIX_CATEGORY_BUG(NSStringNimbusCore)
  * Returns a string that has been escaped for use as a URL parameter.
  */
 - (NSString *)stringByAddingPercentEscapesForURLParameter {
-  return [(NSString *)CFURLCreateStringByAddingPercentEscapes(kCFAllocatorDefault,
-                                                              (CFStringRef)self,
-                                                              NULL,
-                                                              (CFStringRef)@";/?:@&=+$,",
-                                                              kCFStringEncodingUTF8)
-          autorelease];
+  
+  CFStringRef buffer = 
+  CFURLCreateStringByAddingPercentEscapes(kCFAllocatorDefault,
+                                          (__bridge CFStringRef)self,
+                                          NULL,
+                                          (__bridge CFStringRef)@";/?:@&=+$,",
+                                          kCFStringEncodingUTF8);
+  
+  NSString *result = [NSString stringWithString:(__bridge NSString *)buffer];
+  
+  CFRelease(buffer);
+  
+  return result;
 }
 
 

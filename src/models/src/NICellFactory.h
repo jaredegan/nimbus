@@ -95,7 +95,7 @@ _model.delegate = (id)[NICellFactory class];
  *
  *      @ingroup TableCellFactory
  */
-@protocol NICellObject
+@protocol NICellObject <NSObject>
 @required
 /** The class of cell to be created when this object is passed to the cell factory. */
 - (Class)cellClass;
@@ -113,7 +113,7 @@ _model.delegate = (id)[NICellFactory class];
  *
  *      @ingroup TableCellFactory
  */
-@protocol NICell
+@protocol NICell <NSObject>
 @required
 /**
  * Called when a cell is created and reused.
@@ -121,6 +121,7 @@ _model.delegate = (id)[NICellFactory class];
  * Implement this method to customize the cell's properties for display using the given object.
  */
 - (BOOL)shouldUpdateCellWithObject:(id)object;
+
 @optional
 /**
  * Called by the UITableViewDelegate to determine the height for the row. 

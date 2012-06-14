@@ -42,7 +42,7 @@
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 - (void)testEmptyLinkedList {
-  NILinkedList* ll = [[[NILinkedList alloc] init] autorelease];
+  NILinkedList* ll = [[NILinkedList alloc] init];
 
   STAssertEquals([ll count], (NSUInteger)0, @"Initial linked list should be empty.");
   STAssertNil(ll.firstObject, @"Initial linked list should not have a head object.");
@@ -57,13 +57,26 @@
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
+- (void)testLinkedListDescription {
+  id object1 = [NSArray array];
+  id object2 = [NSDictionary dictionary];
+  id object3 = [NSSet set];
+  NSArray* array = [NSArray arrayWithObjects:object1, object2, object3, nil];
+
+  NILinkedList* ll = [[NILinkedList alloc] initWithArray:array];
+
+  STAssertTrue([[ll description] isEqualToString:[array description]], @"Should be equal.");
+}
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
 - (void)testLinkedListWithArray {
   id object1 = [NSArray array];
   id object2 = [NSDictionary dictionary];
   id object3 = [NSSet set];
   NSArray* array = [NSArray arrayWithObjects:object1, object2, object3, nil];
   
-  NILinkedList* ll = [[[NILinkedList alloc] initWithArray:array] autorelease];
+  NILinkedList* ll = [[NILinkedList alloc] initWithArray:array];
   
   STAssertEquals([ll count], (NSUInteger)3, @"Should have 3 objects.");
   STAssertEquals(ll.firstObject, object1, @"Head object should be object1.");
@@ -78,8 +91,19 @@
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
+- (void)testLinkedListAddNilItem {
+  NILinkedList* ll = [[NILinkedList alloc] init];
+
+  NIDebugAssertionsShouldBreak = NO;
+  [ll addObject:nil];
+  NIDebugAssertionsShouldBreak = YES;
+  STAssertEquals(ll.count, (NSUInteger)0, @"There should be no objects.");
+}
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
 - (void)testLinkedListAddSingleItem {
-  NILinkedList* ll = [[[NILinkedList alloc] init] autorelease];
+  NILinkedList* ll = [[NILinkedList alloc] init];
 
   NSArray* object = [NSArray array];
   [ll addObject:object];
@@ -91,7 +115,7 @@
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 - (void)testLinkedListAddTwoItems {
-  NILinkedList* ll = [[[NILinkedList alloc] init] autorelease];
+  NILinkedList* ll = [[NILinkedList alloc] init];
 
   id object1 = [NSArray array];
   id object2 = [NSDictionary dictionary];
@@ -105,7 +129,7 @@
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 - (void)testLinkedListAddThreeItems {
-  NILinkedList* ll = [[[NILinkedList alloc] init] autorelease];
+  NILinkedList* ll = [[NILinkedList alloc] init];
 
   id object1 = [NSArray array];
   id object2 = [NSDictionary dictionary];
@@ -121,7 +145,7 @@
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 - (void)testLinkedListAddArrayOfItems {
-  NILinkedList* ll = [[[NILinkedList alloc] init] autorelease];
+  NILinkedList* ll = [[NILinkedList alloc] init];
   
   id object1 = [NSArray array];
   id object2 = [NSDictionary dictionary];
@@ -135,7 +159,7 @@
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 - (void)testLinkedListCount {
-  NILinkedList* ll = [[[NILinkedList alloc] init] autorelease];
+  NILinkedList* ll = [[NILinkedList alloc] init];
   
   id object1 = [NSArray array];
   id object2 = [NSDictionary dictionary];
@@ -202,7 +226,7 @@
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 - (void)testLinkedListObjectAtLocation {
-  NILinkedList* ll = [[[NILinkedList alloc] init] autorelease];
+  NILinkedList* ll = [[NILinkedList alloc] init];
 
   id object1 = [NSArray array];
   id object2 = [NSDictionary dictionary];
@@ -217,7 +241,7 @@
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 - (void)testLinkedListRemoveFirstObject {
-  NILinkedList* ll = [[[NILinkedList alloc] init] autorelease];
+  NILinkedList* ll = [[NILinkedList alloc] init];
 
   id object1 = [NSArray array];
   id object2 = [NSDictionary dictionary];
@@ -244,7 +268,7 @@
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 - (void)testLinkedListRemoveLastObject {
-  NILinkedList* ll = [[[NILinkedList alloc] init] autorelease];
+  NILinkedList* ll = [[NILinkedList alloc] init];
 
   id object1 = [NSArray array];
   id object2 = [NSDictionary dictionary];
@@ -271,7 +295,7 @@
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 - (void)testLinkedListRemoveAllObjects {
-  NILinkedList* ll = [[[NILinkedList alloc] init] autorelease];
+  NILinkedList* ll = [[NILinkedList alloc] init];
 
   id object1 = [NSArray array];
   id object2 = [NSDictionary dictionary];
@@ -289,7 +313,7 @@
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 - (void)testLinkedListRemoveTooManyObjects {
-  NILinkedList* ll = [[[NILinkedList alloc] init] autorelease];
+  NILinkedList* ll = [[NILinkedList alloc] init];
 
   id object1 = [NSArray array];
   id object2 = [NSDictionary dictionary];
@@ -321,7 +345,7 @@
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 - (void)testLinkedListLocationOfObject {
-  NILinkedList* ll = [[[NILinkedList alloc] init] autorelease];
+  NILinkedList* ll = [[NILinkedList alloc] init];
 
   id object1 = [NSArray array];
   id object2 = [NSDictionary dictionary];
@@ -329,14 +353,13 @@
   [ll addObject:object1];
   NILinkedListLocation* location = [ll addObject:object2];
   [ll addObject:object3];
-  STAssertEquals(location, [ll locationOfObject:object2],
-                 @"The locations should match up");
+  STAssertTrue([location isEqual:[ll locationOfObject:object2]], @"The locations should match up");
 }
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 - (void)testLinkedListRemoveObject {
-  NILinkedList* ll = [[[NILinkedList alloc] init] autorelease];
+  NILinkedList* ll = [[NILinkedList alloc] init];
 
   id object1 = [NSArray array];
   id object2 = [NSDictionary dictionary];
@@ -368,7 +391,7 @@
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 - (void)testLinkedListRemoveObjectAtLocation {
-  NILinkedList* ll = [[[NILinkedList alloc] init] autorelease];
+  NILinkedList* ll = [[NILinkedList alloc] init];
 
   id object1 = [NSArray array];
   id object2 = [NSDictionary dictionary];
@@ -386,7 +409,7 @@
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 - (void)testLinkedListIteration {
-  NILinkedList* ll = [[[NILinkedList alloc] init] autorelease];
+  NILinkedList* ll = [[NILinkedList alloc] init];
 
   id object1 = [NSArray array];
   id object2 = [NSDictionary dictionary];
@@ -413,7 +436,7 @@
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 - (void)testLinkedListEnumeration {
-  NILinkedList* ll = [[[NILinkedList alloc] init] autorelease];
+  NILinkedList* ll = [[NILinkedList alloc] init];
 
   id object1 = [NSArray array];
   id object2 = [NSDictionary dictionary];
@@ -432,7 +455,7 @@
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 - (void)testLinkedListCopying {
-  NILinkedList* ll = [[[NILinkedList alloc] init] autorelease];
+  NILinkedList* ll = [[NILinkedList alloc] init];
 
   id object1 = [NSArray array];
   id object2 = [NSDictionary dictionary];
@@ -441,7 +464,7 @@
   [ll addObject:object2];
   [ll addObject:object3];
 
-  NILinkedList* ll2 = [[ll copy] autorelease];
+  NILinkedList* ll2 = [ll copy];
   STAssertEquals(ll2.count, (NSUInteger)3, @"There should be exactly three objects.");
   STAssertEquals(ll2.firstObject, object1, @"Head should be the first object.");
   STAssertEquals(ll2.lastObject, object3, @"Tail should be the third object.");
@@ -450,7 +473,7 @@
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 - (void)testLinkedListCoding {
-  NILinkedList* ll = [[[NILinkedList alloc] init] autorelease];
+  NILinkedList* ll = [[NILinkedList alloc] init];
 
   id object1 = [NSArray array];
   id object2 = [NSDictionary dictionary];

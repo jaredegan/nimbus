@@ -41,15 +41,13 @@
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 - (void)setUp {
   _delegateMethodsCalled = [[NSMutableArray alloc] init];
-  _unitTestBundle = [[NSBundle bundleWithIdentifier:@"com.nimbus.core.unittests"] retain];
+  _unitTestBundle = [NSBundle bundleWithIdentifier:@"com.nimbus.core.unittests"];
   STAssertNotNil(_unitTestBundle, @"Unable to find the bundle %@", [NSBundle allBundles]);
 }
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 - (void)tearDown {
-  NI_RELEASE_SAFELY(_delegateMethodsCalled);
-  NI_RELEASE_SAFELY(_unitTestBundle);
 }
 
 
@@ -62,10 +60,11 @@
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 - (void)testReadFileFromDiskInitialization {
   NSString* pathToFile = NIPathForBundleResource(_unitTestBundle, @"nimbus64x64.png");
-  NINetworkRequestOperation* op = [[[NINetworkRequestOperation alloc] initWithURL:
-                                    [NSURL fileURLWithPath:pathToFile
-                                               isDirectory:NO]]
-                                   autorelease];
+  NINetworkRequestOperation* op = [[NINetworkRequestOperation alloc] initWithURL:
+                                   [NSURL fileURLWithPath:pathToFile isDirectory:NO]];
+
+  op.tag = 5;
+  STAssertEquals(op.tag, 5, @"Tag should still be the same.");
 
   STAssertNil(op.data, @"Data should be nil to start.");
 }
@@ -73,19 +72,19 @@
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 - (void)testReadFileFromDisk {
-  NINetworkRequestOperation* op = [[[NINetworkRequestOperation alloc] initWithURL:
-                                    [NSURL fileURLWithPath:NIPathForBundleResource(_unitTestBundle, @"nimbus64x64.png")
-                                               isDirectory:NO]]
-                                   autorelease];
+  NINetworkRequestOperation* op = [[NINetworkRequestOperation alloc] initWithURL:
+                                   [NSURL fileURLWithPath:NIPathForBundleResource(_unitTestBundle, @"nimbus64x64.png")
+                                              isDirectory:NO]];
 
-  NSOperationQueue* queue = [[[NSOperationQueue alloc] init] autorelease];
+  NSOperationQueue* queue = [[NSOperationQueue alloc] init];
 
   [queue addOperation:op];
   [queue waitUntilAllOperationsAreFinished];
 
   STAssertNotNil(op.data, @"Data should have been read from the image.");
+  STAssertNil(op.processedObject, @"Should not be any processed object.");
 
-  UIImage* image = [[[UIImage alloc] initWithData:op.data] autorelease];
+  UIImage* image = [[UIImage alloc] initWithData:op.data];
 
   STAssertNotNil(image, @"Image should have been created.");
   STAssertEquals(image.size.width, 64.f, @"Image dimensions should be 64 wide.");
@@ -95,12 +94,11 @@
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 - (void)testReadFileFromDiskFailure {
-  NINetworkRequestOperation* op = [[[NINetworkRequestOperation alloc] initWithURL:
-                                    [NSURL fileURLWithPath:NIPathForBundleResource(_unitTestBundle, @"bogusfile.abc")
-                                               isDirectory:NO]]
-                                   autorelease];
-
-  NSOperationQueue* queue = [[[NSOperationQueue alloc] init] autorelease];
+  NINetworkRequestOperation* op = [[NINetworkRequestOperation alloc] initWithURL:
+                                   [NSURL fileURLWithPath:NIPathForBundleResource(_unitTestBundle, @"bogusfile.abc")
+                                              isDirectory:NO]];
+  
+  NSOperationQueue* queue = [[NSOperationQueue alloc] init];
 
   [queue addOperation:op];
   [queue waitUntilAllOperationsAreFinished];
@@ -115,33 +113,34 @@
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 - (void)testReadFileFromDiskWithDelegateSuccess {
-  NINetworkRequestOperation* op = [[[NINetworkRequestOperation alloc] initWithURL:
-                                    [NSURL fileURLWithPath:NIPathForBundleResource(_unitTestBundle, @"nimbus64x64.png")
-                                               isDirectory:NO]]
-                                   autorelease];
+  NINetworkRequestOperation* op = [[NINetworkRequestOperation alloc] initWithURL:
+                                   [NSURL fileURLWithPath:NIPathForBundleResource(_unitTestBundle, @"nimbus64x64.png")
+                                              isDirectory:NO]];
 
   op.delegate = self;
 
   // Run the operation synchronously.
   [op main];
 
-  STAssertEquals([_delegateMethodsCalled count], (NSUInteger)2,
+  STAssertEquals([_delegateMethodsCalled count], (NSUInteger)3,
                  @"Start and finish should have been called.");
   STAssertTrue([_delegateMethodsCalled containsObject:
-                NSStringFromSelector(@selector(operationDidStart:))],
-               @"operationDidStart: should have been called.");
+                NSStringFromSelector(@selector(nimbusOperationDidStart:))],
+               @"nimbusOperationDidStart: should have been called.");
   STAssertTrue([_delegateMethodsCalled containsObject:
-                NSStringFromSelector(@selector(operationDidFinish:))],
-               @"operationDidFinish: should have been called.");
+                NSStringFromSelector(@selector(nimbusOperationWillFinish:))],
+               @"nimbusOperationWillFinish: should have been called.");
+  STAssertTrue([_delegateMethodsCalled containsObject:
+                NSStringFromSelector(@selector(nimbusOperationDidFinish:))],
+               @"nimbusOperationDidFinish: should have been called.");
 }
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 - (void)testReadFileFromDiskWithDelegateFailure {
-  NINetworkRequestOperation* op = [[[NINetworkRequestOperation alloc] initWithURL:
-                                    [NSURL fileURLWithPath:NIPathForBundleResource(_unitTestBundle, @"bogusfile.abc")
-                                               isDirectory:NO]]
-                                   autorelease];
+  NINetworkRequestOperation* op = [[NINetworkRequestOperation alloc] initWithURL:
+                                   [NSURL fileURLWithPath:NIPathForBundleResource(_unitTestBundle, @"bogusfile.abc")
+                                              isDirectory:NO]];
 
   op.delegate = self;
 
@@ -151,10 +150,10 @@
   STAssertEquals([_delegateMethodsCalled count], (NSUInteger)2,
                  @"Start and finish should have been called.");
   STAssertTrue([_delegateMethodsCalled containsObject:
-                NSStringFromSelector(@selector(operationDidStart:))],
+                NSStringFromSelector(@selector(nimbusOperationDidStart:))],
                @"operationDidStart: should have been called.");
   STAssertTrue([_delegateMethodsCalled containsObject:
-                NSStringFromSelector(@selector(operationDidFail:withError:))],
+                NSStringFromSelector(@selector(nimbusOperationDidFail:withError:))],
                @"operationDidFail:withError: should have been called.");
 
   STAssertEquals([op.lastError domain], NSCocoaErrorDomain,
@@ -170,19 +169,23 @@
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 - (void)testReadFileFromDiskWithBlocksSuccess {
-  NINetworkRequestOperation* op = [[[NINetworkRequestOperation alloc] initWithURL:
-                                    [NSURL fileURLWithPath:NIPathForBundleResource(_unitTestBundle, @"nimbus64x64.png")
-                                               isDirectory:NO]]
-                                   autorelease];
+  NINetworkRequestOperation* op = [[NINetworkRequestOperation alloc] initWithURL:
+                                   [NSURL fileURLWithPath:NIPathForBundleResource(_unitTestBundle, @"nimbus64x64.png")
+                                              isDirectory:NO]];
 
   __block BOOL didStart = NO;
+  __block BOOL willFinish = NO;
   __block BOOL didFinish = NO;
 
-  op.didStartBlock = ^{
+  op.didStartBlock = ^(NIOperation* blockOp) {
     didStart = YES;
   };
 
-  op.didFinishBlock = ^{
+  op.willFinishBlock = ^(NIOperation* blockOp) {
+    willFinish = YES;
+  };
+  
+  op.didFinishBlock = ^(NIOperation* blockOp) {
     didFinish = YES;
   };
 
@@ -190,26 +193,26 @@
   [op main];
 
   STAssertTrue(didStart, @"didStartBlock should have been called.");
+  STAssertTrue(willFinish, @"willFinishBlock should have been called.");
   STAssertTrue(didFinish, @"didFinishBlock should have been called.");
 }
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 - (void)testReadFileFromDiskWithBlocksFailure {
-  NINetworkRequestOperation* op = [[[NINetworkRequestOperation alloc] initWithURL:
-                                    [NSURL fileURLWithPath:NIPathForBundleResource(_unitTestBundle, @"bogusfile.abc")
-                                               isDirectory:NO]]
-                                   autorelease];
+  NINetworkRequestOperation* op = [[NINetworkRequestOperation alloc] initWithURL:
+                                   [NSURL fileURLWithPath:NIPathForBundleResource(_unitTestBundle, @"bogusfile.abc")
+                                              isDirectory:NO]];
 
   __block BOOL didStart = NO;
   __block BOOL didFail = NO;
   __block NSError* failureError = nil;
 
-  op.didStartBlock = ^{
+  op.didStartBlock = ^(NIOperation* blockOp) {
     didStart = YES;
   };
 
-  op.didFailWithErrorBlock = ^(NSError* error) {
+  op.didFailWithErrorBlock = ^(NIOperation* blockOp, NSError* error) {
     didFail = YES;
     failureError = [error copy];
   };
@@ -236,19 +239,25 @@
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-- (void)operationDidStart:(NSOperation *)operation {
+- (void)nimbusOperationDidStart:(NSOperation *)operation {
   [_delegateMethodsCalled addObject:NSStringFromSelector(_cmd)];
 }
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-- (void)operationDidFinish:(NSOperation *)operation {
+- (void)nimbusOperationWillFinish:(NSOperation *)operation {
   [_delegateMethodsCalled addObject:NSStringFromSelector(_cmd)];
 }
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-- (void)operationDidFail:(NSOperation *)operation withError:(NSError *)error {
+- (void)nimbusOperationDidFinish:(NSOperation *)operation {
+  [_delegateMethodsCalled addObject:NSStringFromSelector(_cmd)];
+}
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+- (void)nimbusOperationDidFail:(NSOperation *)operation withError:(NSError *)error {
   [_delegateMethodsCalled addObject:NSStringFromSelector(_cmd)];
 }
 

@@ -21,6 +21,8 @@
 #import "NIPagingScrollViewDelegate.h"
 #import "NimbusCore.h"
 
+#import <objc/runtime.h>
+
 const NSInteger NIPagingScrollViewUnknownNumberOfPages = -1;
 const CGFloat NIPagingScrollViewDefaultPageHorizontalMargin = 10;
 
@@ -46,44 +48,48 @@ const CGFloat NIPagingScrollViewDefaultPageHorizontalMargin = 10;
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-- (void)dealloc {
-  NI_RELEASE_SAFELY(_pagingScrollView);
+- (void)commonInit {
+  // Default state.
+  self.pageHorizontalMargin = NIPagingScrollViewDefaultPageHorizontalMargin;
 
-  NI_RELEASE_SAFELY(_visiblePages);
-  NI_RELEASE_SAFELY(_viewRecycler);
+  _firstVisiblePageIndexBeforeRotation = -1;
+  _percentScrolledIntoFirstVisiblePage = -1;
+  _centerPageIndex = -1;
+  _numberOfPages = NIPagingScrollViewUnknownNumberOfPages;
 
-  [super dealloc];
+  _viewRecycler = [[NIViewRecycler alloc] init];
+
+  self.pagingScrollView = [[UIScrollView alloc] initWithFrame:self.bounds];
+  self.pagingScrollView.pagingEnabled = YES;
+
+  self.pagingScrollView.autoresizingMask = (UIViewAutoresizingFlexibleWidth
+                                            | UIViewAutoresizingFlexibleHeight);
+
+  self.pagingScrollView.delegate = self;
+
+  // Ensure that empty areas of the scroll view are draggable.
+  self.pagingScrollView.backgroundColor = [UIColor blackColor];
+
+  self.pagingScrollView.showsVerticalScrollIndicator = NO;
+  self.pagingScrollView.showsHorizontalScrollIndicator = NO;
+
+  [self addSubview:self.pagingScrollView];
 }
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 - (id)initWithFrame:(CGRect)frame {
   if ((self = [super initWithFrame:frame])) {
-    // Default state.
-    self.pageHorizontalMargin = NIPagingScrollViewDefaultPageHorizontalMargin;
+    [self commonInit];
+  }
+  return self;
+}
 
-    _firstVisiblePageIndexBeforeRotation = -1;
-    _percentScrolledIntoFirstVisiblePage = -1;
-    _centerPageIndex = -1;
-    _numberOfPages = NIPagingScrollViewUnknownNumberOfPages;
-    
-    _viewRecycler = [[NIViewRecycler alloc] init];
 
-    self.pagingScrollView = [[[UIScrollView alloc] initWithFrame:frame] autorelease];
-    self.pagingScrollView.pagingEnabled = YES;
-
-    self.pagingScrollView.autoresizingMask = (UIViewAutoresizingFlexibleWidth
-                                              | UIViewAutoresizingFlexibleHeight);
-
-    self.pagingScrollView.delegate = self;
-
-    // Ensure that empty areas of the scroll view are draggable.
-    self.pagingScrollView.backgroundColor = [UIColor blackColor];
-
-    self.pagingScrollView.showsVerticalScrollIndicator = NO;
-    self.pagingScrollView.showsHorizontalScrollIndicator = NO;
-
-    [self addSubview:self.pagingScrollView];
+///////////////////////////////////////////////////////////////////////////////////////////////////
+- (id)initWithCoder:(NSCoder *)aDecoder {
+  if ((self = [super initWithCoder:aDecoder])) {
+    [self commonInit];
   }
   return self;
 }
@@ -259,15 +265,11 @@ const CGFloat NIPagingScrollViewDefaultPageHorizontalMargin = 10;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 - (void)updateVisiblePages {
-  NSInteger oldCenterPageIndex = self.centerPageIndex;
-
   NSRange visiblePageRange = [self visiblePageRange];
-
-  _centerPageIndex = [self currentVisiblePageIndex];
 
   // Recycle no-longer-visible pages. We copy _visiblePages because we may modify it while we're
   // iterating over it.
-  for (UIView<NIPagingScrollViewPage>* page in [[_visiblePages copy] autorelease]) {
+  for (UIView<NIPagingScrollViewPage>* page in [_visiblePages copy]) {
     if (!NSLocationInRange(page.pageIndex, visiblePageRange)) {
       [_viewRecycler recycleView:page];
       [page removeFromSuperview];
@@ -278,17 +280,25 @@ const CGFloat NIPagingScrollViewDefaultPageHorizontalMargin = 10;
     }
   }
 
-  // Prioritize displaying the currently visible page.
-  if (![self isDisplayingPageForIndex:_centerPageIndex]) {
-    [self displayPageAtIndex:_centerPageIndex];
-  }
-
-  // Add missing pages.
-  for (int pageIndex = visiblePageRange.location;
-       pageIndex < NSMaxRange(visiblePageRange); ++pageIndex) {
-    if (![self isDisplayingPageForIndex:pageIndex]) {
-      [self displayPageAtIndex:pageIndex];
+  NSInteger oldCenterPageIndex = self.centerPageIndex;
+    
+  if (_numberOfPages > 0) {
+    _centerPageIndex = [self currentVisiblePageIndex];
+      
+    // Prioritize displaying the currently visible page.
+    if (![self isDisplayingPageForIndex:_centerPageIndex]) {
+      [self displayPageAtIndex:_centerPageIndex];
     }
+      
+    // Add missing pages.
+    for (int pageIndex = visiblePageRange.location;
+         pageIndex < NSMaxRange(visiblePageRange); ++pageIndex) {
+      if (![self isDisplayingPageForIndex:pageIndex]) {
+        [self displayPageAtIndex:pageIndex];
+      }
+    }
+  } else {
+    _centerPageIndex = -1;
   }
 
   if (oldCenterPageIndex != _centerPageIndex
@@ -385,6 +395,48 @@ const CGFloat NIPagingScrollViewDefaultPageHorizontalMargin = 10;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
+#pragma mark - Forward UIScrollViewDelegate Methods
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+- (BOOL)shouldForwardSelectorToDelegate:(SEL)aSelector {
+  struct objc_method_description description;
+  // Only forward the selector if it's part of the UIScrollViewDelegate protocol.
+  description = protocol_getMethodDescription(@protocol(UIScrollViewDelegate),
+                                              aSelector,
+                                              NO,
+                                              YES);
+
+  BOOL isSelectorInScrollViewDelegate = (description.name != NULL && description.types != NULL);
+  return (isSelectorInScrollViewDelegate
+          && [self.delegate respondsToSelector:aSelector]);
+}
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+- (BOOL)respondsToSelector:(SEL)aSelector {
+  if ([super respondsToSelector:aSelector] == YES) {
+    return YES;
+
+  } else {
+    return [self shouldForwardSelectorToDelegate:aSelector];
+  }
+}
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+- (id)forwardingTargetForSelector:(SEL)aSelector {
+  if ([self shouldForwardSelectorToDelegate:aSelector]) {
+    return self.delegate;
+
+  } else {
+    return nil;
+  }
+}
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////
 #pragma mark -
 #pragma mark Subclassing
 
@@ -417,7 +469,7 @@ const CGFloat NIPagingScrollViewDefaultPageHorizontalMargin = 10;
     [(UIView *)page removeFromSuperview];
   }
 
-  NI_RELEASE_SAFELY(_visiblePages);
+  _visiblePages = nil;
 
   // If there is no data source then we can't do anything particularly interesting.
   if (nil == _dataSource) {

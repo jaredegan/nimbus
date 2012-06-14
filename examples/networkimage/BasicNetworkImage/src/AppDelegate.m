@@ -29,15 +29,6 @@
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-- (void)dealloc {
-  NI_RELEASE_SAFELY(_window);
-  NI_RELEASE_SAFELY(_rootController);
-
-  [super dealloc];
-}
-
-
-///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 #pragma mark -
 #pragma mark Application lifecycle
@@ -46,7 +37,7 @@
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 - (BOOL)              application:(UIApplication *)application
     didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
-  self.window = [[[UIWindow alloc] initWithFrame:[UIScreen mainScreen].bounds] autorelease];
+  self.window = [[UIWindow alloc] initWithFrame:[UIScreen mainScreen].bounds];
 
   // Try experimenting with the maximum number of concurrent operations here.
   // By making it one, we force the network operations to happen serially. This can be
@@ -62,8 +53,7 @@
 
 
   // Try experimenting with this value to see how the total number of pixels is affected.
-
-  //[[Nimbus globalImageMemoryCache] setMaxNumberOfPixels:94*94];
+  //[[Nimbus imageMemoryCache] setMaxNumberOfPixels:94*94];
 
   _rootController = [[RootViewController alloc] initWithNibName:nil bundle:nil];
   [self.window addSubview:_rootController.view];
