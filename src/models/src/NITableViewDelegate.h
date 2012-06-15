@@ -25,12 +25,12 @@
 
 @interface NITableViewDelegate : NSObject <UITableViewDelegate> {
     NITableViewModel *_dataSource;
-    id<NITableViewDelegateDelegate> _delegate; 
+    id<NITableViewDelegateDelegate> __weak _delegate; 
 }
 
-@property (nonatomic, retain) NITableViewModel *dataSource;
+@property (nonatomic, strong) NITableViewModel *dataSource;
 
-@property (nonatomic, assign) id<NITableViewDelegateDelegate> delegate;
+@property (nonatomic, weak) id<NITableViewDelegateDelegate> delegate;
 
 - (id)initWithDataSource:(NITableViewModel *)dataSource;
 - (id)initWithDataSource:(NITableViewModel *)dataSource

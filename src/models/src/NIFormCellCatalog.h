@@ -61,7 +61,7 @@
 @property (nonatomic, readwrite, copy) NSString* placeholderText;
 @property (nonatomic, readwrite, copy) NSString* value;
 @property (nonatomic, readwrite, assign) BOOL isPassword;
-@property (nonatomic, readwrite, assign) id<UITextFieldDelegate> delegate;
+@property (nonatomic, readwrite, weak) id<UITextFieldDelegate> delegate;
 
 @end
 
@@ -83,7 +83,7 @@
 
 @property (nonatomic, readwrite, copy) NSString* labelText;
 @property (nonatomic, readwrite, assign) BOOL value;
-@property (nonatomic, readwrite, assign) id didChangeTarget;
+@property (nonatomic, readwrite, weak) id didChangeTarget;
 @property (nonatomic, readwrite, assign) SEL didChangeSelector;
 
 @end
@@ -99,7 +99,7 @@
  *      @ingroup TableCellCatalog
  */
 @interface NIFormElementCell : UITableViewCell <NICell>
-@property (nonatomic, readonly, retain) NIFormElement* element;
+@property (nonatomic, readonly, strong) NIFormElement* element;
 @end
 
 /**
@@ -112,7 +112,7 @@
  *      @ingroup TableCellCatalog
  */
 @interface NITextInputFormElementCell : NIFormElementCell <UITextFieldDelegate>
-@property (nonatomic, readonly, retain) UITextField* textField;
+@property (nonatomic, readonly, strong) UITextField* textField;
 @end
 
 /**
@@ -125,7 +125,7 @@
  *      @ingroup TableCellCatalog
  */
 @interface NISwitchFormElementCell : NIFormElementCell <UITextFieldDelegate>
-@property (nonatomic, readonly, retain) UISwitch* switchControl;
+@property (nonatomic, readonly, strong) UISwitch* switchControl;
 @end
 
 @interface NITableViewModel (NIFormElementSearch)

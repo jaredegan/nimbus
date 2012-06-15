@@ -22,23 +22,23 @@
 #import "NimbusCore.h"
 
 @interface NIWebController()
-@property (nonatomic, readwrite, retain) UIWebView* webView;
-@property (nonatomic, readwrite, retain) UIToolbar* toolbar;
-@property (nonatomic, readwrite, retain) UIActionSheet* actionSheet;
+@property (nonatomic, readwrite, strong) UIWebView* webView;
+@property (nonatomic, readwrite, strong) UIToolbar* toolbar;
+@property (nonatomic, readwrite, strong) UIActionSheet* actionSheet;
 
-@property (nonatomic, readwrite, retain) UIBarButtonItem* backButton;
-@property (nonatomic, readwrite, retain) UIBarButtonItem* forwardButton;
-@property (nonatomic, readwrite, retain) UIBarButtonItem* refreshButton;
-@property (nonatomic, readwrite, retain) UIBarButtonItem* stopButton;
-@property (nonatomic, readwrite, retain) UIBarButtonItem* actionButton;
-@property (nonatomic, readwrite, retain) UIBarButtonItem* activityItem;
+@property (nonatomic, readwrite, strong) UIBarButtonItem* backButton;
+@property (nonatomic, readwrite, strong) UIBarButtonItem* forwardButton;
+@property (nonatomic, readwrite, strong) UIBarButtonItem* refreshButton;
+@property (nonatomic, readwrite, strong) UIBarButtonItem* stopButton;
+@property (nonatomic, readwrite, strong) UIBarButtonItem* actionButton;
+@property (nonatomic, readwrite, strong) UIBarButtonItem* activityItem;
 
-@property (nonatomic, readwrite, retain) NSURL* actionSheetURL;
-@property (nonatomic, readwrite, retain) NSURL* loadingURL;
+@property (nonatomic, readwrite, strong) NSURL* actionSheetURL;
+@property (nonatomic, readwrite, strong) NSURL* loadingURL;
 
-@property (nonatomic, readwrite, retain) NSURLRequest* loadRequest;
+@property (nonatomic, readwrite, strong) NSURLRequest* loadRequest;
 @property (nonatomic, readwrite, assign) BOOL toolbarHidden;
-@property (nonatomic, readwrite, retain) UIColor* toolbarTintColor;
+@property (nonatomic, readwrite, strong) UIColor* toolbarTintColor;
 @end
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////

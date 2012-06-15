@@ -75,15 +75,15 @@ typedef enum {
 
 #pragma mark Configurable Presentation Properties
 
-@property (nonatomic, readwrite, retain) UIImage* initialImage;     // Default: nil
+@property (nonatomic, readwrite, strong) UIImage* initialImage;     // Default: nil
 @property (nonatomic, readwrite, assign) BOOL sizeForDisplay;       // Default: YES
 @property (nonatomic, readwrite, assign) NINetworkImageViewScaleOptions scaleOptions; // Default: NINetworkImageViewScaleToFitLeavesExcessAndScaleToFillCropsExcess
 @property (nonatomic, readwrite, assign) CGInterpolationQuality interpolationQuality; // Default: kCGInterpolationDefault
 
 #pragma mark Configurable Properties
 
-@property (nonatomic, readwrite, retain) NIImageMemoryCache* imageMemoryCache;    // Default: [Nimbus imageMemoryCache]
-@property (nonatomic, readwrite, retain) NSOperationQueue* networkOperationQueue; // Default: [Nimbus networkOperationQueue]
+@property (nonatomic, readwrite, strong) NIImageMemoryCache* imageMemoryCache;    // Default: [Nimbus imageMemoryCache]
+@property (nonatomic, readwrite, strong) NSOperationQueue* networkOperationQueue; // Default: [Nimbus networkOperationQueue]
 
 @property (nonatomic, readwrite, assign) NSTimeInterval maxAge;     // Default: 0
 
@@ -108,7 +108,7 @@ typedef enum {
 
 #pragma mark Delegation
 
-@property (nonatomic, readwrite, assign) id<NINetworkImageViewDelegate> delegate;
+@property (nonatomic, readwrite, weak) id<NINetworkImageViewDelegate> delegate;
 
 #pragma mark Subclassing
 
