@@ -20,6 +20,9 @@
 #import "NIPhotoAlbumScrollViewDataSource.h"
 #import "NimbusCore.h"
 
+#if !defined(__has_feature) || !__has_feature(objc_arc)
+#error "Nimbus requires ARC support."
+#endif
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -200,7 +203,7 @@
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 - (void)setPhotoViewBackgroundColor:(UIColor *)photoViewBackgroundColor {
   if (_photoViewBackgroundColor != photoViewBackgroundColor) {
-      self.photoViewBackgroundColor = photoViewBackgroundColor;
+      _photoViewBackgroundColor = photoViewBackgroundColor;
     
     for (UIView<NIPagingScrollViewPage>* page in self.visiblePages) {
       page.backgroundColor = photoViewBackgroundColor;

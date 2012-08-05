@@ -20,6 +20,9 @@
 
 #import "NimbusCore.h"
 
+#if !defined(__has_feature) || !__has_feature(objc_arc)
+#error "Nimbus requires ARC support."
+#endif
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -220,8 +223,6 @@
 - (void)viewWillAppear:(BOOL)animated {
   [super viewWillAppear:animated];
 
-  [NINavigationAppearance pushAppearanceForNavigationController:self.navigationController];
-
   [[UIApplication sharedApplication] setStatusBarStyle: (NIIsPad()
                                                          ? UIStatusBarStyleBlackOpaque
                                                          : UIStatusBarStyleBlackTranslucent)
@@ -233,14 +234,6 @@
 
   _previousButton.enabled = [self.photoAlbumView hasPrevious];
   _nextButton.enabled = [self.photoAlbumView hasNext];
-}
-
-
-///////////////////////////////////////////////////////////////////////////////////////////////////
-- (void)viewWillDisappear:(BOOL)animated {
-  [super viewWillDisappear:animated];
-
-  [NINavigationAppearance popAppearanceForNavigationController:self.navigationController animated:YES];
 }
 
 
@@ -278,6 +271,12 @@
     photoAlbumFrame.size.height = self.view.bounds.size.height - toolbarFrame.size.height;
     self.photoAlbumView.frame = photoAlbumFrame;
   }
+}
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+- (UIView *)rotatingFooterView {
+  return self.toolbar.hidden ? nil : self.toolbar;
 }
 
 

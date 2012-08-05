@@ -20,6 +20,10 @@
 
 #import "NimbusCore.h"
 
+#if !defined(__has_feature) || !__has_feature(objc_arc)
+#error "Nimbus requires ARC support."
+#endif
+
 /**
  * A UIScrollView that centers the zooming view's frame as the user zooms.
  *
@@ -96,6 +100,7 @@
 @synthesize zoomingAboveOriginalSizeIsEnabled = _zoomingAboveOriginalSizeIsEnabled;
 @synthesize photoScrollViewDelegate = _photoScrollViewDelegate;
 @synthesize doubleTapToZoomIsEnabled = _doubleTapToZoomIsEnabled;
+@synthesize maximumScale = _maximumScale;
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -418,7 +423,6 @@
   CGSize imageSize = _imageView.bounds.size;
   
   // Avoid crashing if the image has no dimensions.
-  NIDASSERT(imageSize.width > 0 && imageSize.height > 0);
   if (imageSize.width <= 0 || imageSize.height <= 0) {
     _scrollView.maximumZoomScale = 1;
     _scrollView.minimumZoomScale = 1;
@@ -465,7 +469,11 @@
   }
   
   // If zooming is disabled then we flatten the range for zooming to only allow the min zoom.
-  _scrollView.maximumZoomScale = [self isZoomingEnabled] ? maxScale : minScale;
+  if (self.isZoomingEnabled && NIPhotoScrollViewPhotoSizeOriginal == self.photoSize && self.maximumScale > 0) {
+    _scrollView.maximumZoomScale = self.maximumScale;
+  } else {
+    _scrollView.maximumZoomScale = self.isZoomingEnabled ? maxScale : minScale;
+  }
   _scrollView.minimumZoomScale = minScale;
 }
 

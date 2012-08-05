@@ -20,6 +20,8 @@
  * @defgroup NimbusCSS Nimbus CSS
  * @{
  *
+ * <div id="github" feature="css"></div>
+ *
  * Nimbus CSS allows you to use cascading stylesheets to theme your native iOS application.
  * Stylesheets provide a number of advantages over Interface Builder and native code.
  *
@@ -32,12 +34,6 @@
  *   the application's UI when the app state changes. A good example of this is the Rdio app
  *   when you go into offline mode and the app's online components gray out.
  * - Chameleon - modify CSS files and watch the changes affect your app in real time.
- */
-
-/**
- * NIStylesheet is the backbone of the Nimbus CSS feature.
- *
- *      @defgroup CSS-Stylesheets CSS Stylesheets
  *
  * <h2>How to Create a Stylesheet</h2>
  *

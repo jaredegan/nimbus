@@ -65,7 +65,7 @@ typedef enum {
  * Intelligently crops and resizes images for optimal memory use and uses threads to avoid
  * processing images on the UI thread.
  *
- *      @ingroup Network-Image-User-Interface
+ *      @ingroup NimbusNetworkImage
  */
 @interface NINetworkImageView : UIImageView <NIOperationDelegate>
 
@@ -122,7 +122,7 @@ typedef enum {
 /**
  * The image view delegate used to inform of state changes.
  *
- *      @ingroup Network-Image-User-Interface
+ *      @ingroup NimbusNetworkImage
  */
 @protocol NINetworkImageViewDelegate <NSObject>
 @optional
@@ -142,13 +142,18 @@ typedef enum {
  */
 - (void)networkImageView:(NINetworkImageView *)imageView didFailWithError:(NSError *)error;
 
+/**
+ * The progress of the download.
+ */
+- (void)networkImageView:(NINetworkImageView *)imageView readBytes:(long long)readBytes totalBytes:(long long)totalBytes;
+
 @end
 
 /**
  * Flags for modifying the way cropping is handled when scaling images to fit or fill.
  *
  *      @enum NINetworkImageViewScaleOptions
- *      @ingroup Network-Image-User-Interface
+ *      @ingroup NimbusNetworkImage
  *
  * By default the network image view will behave in the following way for these content modes:
  *

@@ -46,13 +46,11 @@
     [[CatalogTableViewController alloc] initWithStyle:UITableViewStyleGrouped];
 
   _rootViewController = [[UINavigationController alloc] initWithRootViewController:catalogVC];
-
   self.window.rootViewController = _rootViewController;
-  [self.window addSubview:_rootViewController.view];
-
-  [NIOverview addOverviewToWindow:self.window];
 
   [self.window makeKeyAndVisible];
+
+  [NIOverview addOverviewToWindow:self.window];
   
   return YES;
 }

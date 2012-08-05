@@ -30,6 +30,12 @@
 
 + (BOOL)safariWithURL:(NSURL *)url;
 
+#pragma mark Google Chrome
+
++ (BOOL)googleChromeIsInstalled;
++ (BOOL)googleChromeWithURL:(NSURL *)url;
++ (NSString *)googleChromeAppStoreId;
+
 #pragma mark Google Maps
 
 + (BOOL)googleMapAtLocation:(CLLocationCoordinate2D)location;
@@ -60,6 +66,8 @@
 #pragma mark App Store
 
 + (BOOL)appStoreWithAppId:(NSString *)appId;
++ (BOOL)appStoreGiftWithAppId:(NSString *)appId;
++ (BOOL)appStoreReviewWithAppId:(NSString *)appId;
 
 #pragma mark iBooks
 
@@ -129,6 +137,27 @@
  * Opens the given URL in Safari.
  *
  *      @fn NIInterapp::safariWithURL:
+ */
+
+
+/** @name Google Chrome **/
+
+/**
+ * Returns YES if the Google Chrome application is installed.
+ *
+ *      @fn NIInterapp::googleChromeIsInstalled
+ */
+
+/**
+ * Opens the given URL in Google Chrome if installed on the device.
+ *
+ *      @fn NIINterapp::googleChromeWithURL:
+ */
+
+/**
+ * The Google Chrome App Store ID.
+ *
+ *      @fn NIInterapp::googleChromeAppStoreId
  */
 
 
@@ -383,4 +412,16 @@
  * Opens the App Store page for the app with the given ID.
  *
  *      @fn NIInterapp::appStoreWithAppId:
+ */
+
+/**
+ * Opens the "Gift this app" App Store page for the app with the given ID.
+ *
+ *      @fn NIInterapp::appStoreGiftWithAppId:
+ */
+
+/**
+ * Opens the "Write a review" App Store page for the app with the given ID.
+ *
+ *      @fn NIInterapp::appStoreReviewWithAppId:
  */
