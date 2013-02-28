@@ -71,7 +71,7 @@
         if ([cls conformsToProtocol:@protocol(NICell)]) {
             Method method = class_getClassMethod(cls, @selector(tableView:rowHeightForObject:));
             if (method != NULL) {
-                return [cls tableView:tableView rowHeightForObject:object];
+                return (CGFloat)[cls tableView:tableView rowHeightForObject:object];
             }
         }
     }
