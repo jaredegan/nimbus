@@ -63,12 +63,12 @@
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
 
 
-    if ([_delegate conformsToProtocol:@protocol(NITableViewSystemDelegate)]) {
+    if ([self.delegate conformsToProtocol:@protocol(NITableViewSystemDelegate)]) {
         id object = [self.dataSource objectAtIndexPath:indexPath];
 
         if (object != nil) {
-            if ([_delegate respondsToSelector:@selector(tableSystem:didSelectObject:atIndexPath:)]) {
-                [_delegate tableSystem:self.tableSystem didSelectObject:object atIndexPath:indexPath];
+            if ([self.delegate respondsToSelector:@selector(tableSystem:didSelectObject:atIndexPath:)]) {
+                [self.delegate tableSystem:self.tableSystem didSelectObject:object atIndexPath:indexPath];
             }
 
             /*

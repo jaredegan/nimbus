@@ -22,8 +22,8 @@ UIScrollViewDelegate> {
 
 @property (nonatomic, strong) NITableViewModel *dataSource;
 
-@property (nonatomic, unsafe_unretained) NITableViewSystem *tableSystem;
-@property (nonatomic, unsafe_unretained) id<NITableViewSystemDelegate, UIScrollViewDelegate> delegate;
+@property (nonatomic, weak) NITableViewSystem *tableSystem;
+@property (nonatomic, weak) id<NITableViewSystemDelegate, UIScrollViewDelegate> delegate;
 
 - (id)initWithDataSource:(NITableViewModel *)dataSource;
 - (id)initWithDataSource:(NITableViewModel *)dataSource
