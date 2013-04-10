@@ -254,6 +254,37 @@
     return YES;
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+- (BOOL)replaceTableItem:(id)oldObject withTableItem:(id)object
+        withRowAnimation:(UITableViewRowAnimation)animation {
+    NSIndexPath *indexPath = [self indexPathForTableItem:oldObject];
+
+    NSAssert(indexPath, @"Attempting to replace table item not in the table: %@", object);
+
+    if (indexPath == nil) {
+        // Can't find object, so we can't replace it
+        return NO;
+    }
+
+    // Update the datasource
+    NITableViewModelSection *section = [self.dataSource.sections objectAtIndex:indexPath.section];
+
+    NSMutableArray *newRows = [NSMutableArray arrayWithArray:section.rows];
+    NSUInteger index = [newRows indexOfObject:oldObject];
+    [newRows insertObject:object atIndex:index];
+    [newRows removeObject:oldObject];
+    section.rows = newRows;
+
+    // Update the table
+    [self.tableView beginUpdates];
+    [self.tableView reloadRowsAtIndexPaths:@[indexPath]
+                          withRowAnimation:animation];
+
+    [self.tableView endUpdates];
+
+    return YES;
+}
+
 
 @end
 

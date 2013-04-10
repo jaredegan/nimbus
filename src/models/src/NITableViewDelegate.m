@@ -115,6 +115,21 @@
     return tableView.rowHeight;
 }
 
+///////////////////////////////////////////////////////////////////////////////////////////////////
+- (void)tableView:(UITableView *)tableView willDisplayCell:(UITableViewCell *)cell
+forRowAtIndexPath:(NSIndexPath *)indexPath {
+    id object = [self.dataSource objectAtIndexPath:indexPath];
+
+    if ([self.delegate respondsToSelector:@selector(tableSystem:willDisplayCell:forTableItem:forRowAtIndexPath:)]) {
+        [self.delegate tableSystem:self.tableSystem
+                   willDisplayCell:cell
+                      forTableItem:object
+                 forRowAtIndexPath:indexPath];
+    }
+
+    // TODO: Forward the regular UITableViewDelegate message
+}
+
 #pragma mark -
 #pragma mark UIScrollViewDelegate
 // Forward all scrolling delegate messages to our delegate

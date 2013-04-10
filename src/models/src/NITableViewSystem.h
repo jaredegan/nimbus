@@ -40,6 +40,8 @@
         atIndexPath:(NSIndexPath *)indexPath;
 - (void)tableSystem:(NITableViewSystem *)tableSystem didAssignCell:(id)object toTableItem:(id)tableItem
 		atIndexPath:(NSIndexPath *)indexPath;
+- (void)tableSystem:(NITableViewSystem *)tableSystem willDisplayCell:(UITableViewCell *)cell
+        forTableItem:(id)tableItem forRowAtIndexPath:(NSIndexPath *)indexPath;
 @end
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -91,6 +93,9 @@
  *  @returns YES if a NSIndexPath was found and deleteRowsAtIndexPaths: was called on the table, NO otherwise.
  */
 - (BOOL)deleteTableItem:(id)object withRowAnimation:(UITableViewRowAnimation)animation;
+
+- (BOOL)replaceTableItem:(id)oldObject withTableItem:(id)object
+        withRowAnimation:(UITableViewRowAnimation)animation;
 
 @end
 
